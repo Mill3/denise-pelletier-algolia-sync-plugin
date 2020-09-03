@@ -316,9 +316,11 @@ abstract class RegisterAbstract
         if (\function_exists('pll_get_post_language')) {
             $post_locale = pll_get_post_language($post_ID);
             $this->locale = $post_locale ? $post_locale : pll_default_language('slug');
+            return implode('_', array($this->index_name_base, $this->locale));
+        } else {
+            return $this->index_name_base;
         }
 
-        return implode('_', array($this->index_name_base, $this->locale));
     }
 
     /**

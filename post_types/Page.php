@@ -11,13 +11,13 @@ namespace WpAlgolia\Register;
 use WpAlgolia\RegisterAbstract as WpAlgoliaRegisterAbstract;
 use WpAlgolia\RegisterInterface as WpAlgoliaRegisterInterface;
 
-class Stages extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInterface
+class Page extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInterface
 {
     public $searchable_fields = array('post_title', 'content');
 
-    public $acf_fields = array('company' => ['post_title'], 'link', 'link_to_permalink');
+    public $acf_fields = array();
 
-    public $taxonomies = array('sectors', 'regions', 'establishment_types', 'post_tag');
+    public $taxonomies = array();
 
     public function __construct($post_type, $index_name, $algolia_client)
     {
@@ -28,9 +28,7 @@ class Stages extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInter
             'hidden_flag_field' => 'search_hidden',
             'config'            => array(
                 'searchableAttributes'  => $this->searchableAttributes(),
-                'customRanking'         => array('asc(code)'),
-                'attributesForFaceting' => array('searchable(sectors)', 'searchable(regions)', 'searchable(establishment_types)', 'searchable(company)'),
-                'queryLanguages'        => array('fr', 'en'),
+                'queryLanguages'        => array('fr'),
             ),
             array(
                'forwardToReplicas' => true,
@@ -42,6 +40,6 @@ class Stages extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInter
 
     public function searchableAttributes()
     {
-        return array_merge($this->searchable_fields, array('company'), $this->taxonomies);
+        return array_merge($this->searchable_fields, $this->acf_fields, $this->taxonomies);
     }
 }

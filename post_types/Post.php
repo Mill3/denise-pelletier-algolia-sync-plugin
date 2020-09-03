@@ -11,13 +11,13 @@ namespace WpAlgolia\Register;
 use WpAlgolia\RegisterAbstract as WpAlgoliaRegisterAbstract;
 use WpAlgolia\RegisterInterface as WpAlgoliaRegisterInterface;
 
-class Pages extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInterface
+class Post extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInterface
 {
-    public $searchable_fields = array('post_title', 'content');
+    public $searchable_fields = array('post_title');
 
     public $acf_fields = array();
 
-    public $taxonomies = array();
+    public $taxonomies = array('category', 'post_tag');
 
     public function __construct($post_type, $index_name, $algolia_client)
     {

@@ -6,13 +6,13 @@ use Algolia\AlgoliaSearch\Config\SearchConfig;
 use Algolia\AlgoliaSearch\Exceptions\MissingObjectId;
 use Algolia\AlgoliaSearch\Exceptions\NotFoundException;
 use Algolia\AlgoliaSearch\Exceptions\ObjectNotFoundException;
-use Algolia\AlgoliaSearch\RequestOptions\RequestOptionsFactory;
-use Algolia\AlgoliaSearch\Response\BatchIndexingResponse;
-use Algolia\AlgoliaSearch\Response\IndexingResponse;
-use Algolia\AlgoliaSearch\RequestOptions\RequestOptions;
 use Algolia\AlgoliaSearch\Iterators\ObjectIterator;
 use Algolia\AlgoliaSearch\Iterators\RuleIterator;
 use Algolia\AlgoliaSearch\Iterators\SynonymIterator;
+use Algolia\AlgoliaSearch\RequestOptions\RequestOptions;
+use Algolia\AlgoliaSearch\RequestOptions\RequestOptionsFactory;
+use Algolia\AlgoliaSearch\Response\BatchIndexingResponse;
+use Algolia\AlgoliaSearch\Response\IndexingResponse;
 use Algolia\AlgoliaSearch\Response\MultiResponse;
 use Algolia\AlgoliaSearch\Response\NullResponse;
 use Algolia\AlgoliaSearch\RetryStrategy\ApiWrapperInterface;
@@ -186,7 +186,7 @@ class SearchIndex
             $message .= "If your batch has a unique identifier but isn't called objectID,\n";
             $message .= "you can map it automatically using `saveObjects(\$objects, ['objectIDKey' => 'primary'])`\n\n";
             $message .= "Algolia is also able to generate objectIDs automatically but *it's not recommended*.\n";
-            $message .= "To do it, use `saveObjects(\$objects, ['autoGenerateObjectIDIfNotExist' => true])`\n\n";
+            $message .= "To do it, use `['autoGenerateObjectIDIfNotExist' => true] on the request options parameter`\n\n";
 
             throw new MissingObjectId($message);
         }
@@ -512,6 +512,18 @@ class SearchIndex
         }
 
         Helpers::ensureObjectID($rules, 'All rules must have an unique objectID to be valid');
+
+        /*
+         * If consequence `params` is an array without keys, we are going to remove it
+         * from the payload of the rule. Otherwise the transporter layer will serialize
+         * `params` to an empty array [] instead of an empty object {} making an invalid
+         * rule on the engine side.
+         */
+        foreach ($rules as $key => $rule) {
+            if (isset($rule['consequence']) && empty($rule['consequence']['params'])) {
+                unset($rules[$key]['consequence']['params']);
+            }
+        }
 
         $response = $this->api->write(
             'POST',

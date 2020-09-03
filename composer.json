@@ -1,6 +1,6 @@
 {
     "require": {
-        "algolia/algoliasearch-client-php": "^2.4",
+        "algolia/algoliasearch-client-php": "^2.7",
         "monolog/monolog": "^2.0",
         "nesbot/carbon": "^2.31"
     }
