@@ -5,7 +5,7 @@
  * GitHub Plugin URI:  https://github.com/Mill3/denise-pelletier-algolia-sync-plugin
  * Plugin Name: TDP - Algolia Sync
  * Description: Sync data from Wordpress to Algolia
- * Version: 0.4.4
+ * Version: 0.4.5
  * Author Name: Mill3 Studio (Antoine Girard)
  *
  * @package CSTJ_Algolia_Sync
@@ -34,6 +34,7 @@ class Main {
         $this->registered_post_types['post'] = new \WpAlgolia\Register\Post('post', ALGOLIA_PREFIX . 'content', $this->algolia_client);
         $this->registered_post_types['show'] = new \WpAlgolia\Register\Show('show', ALGOLIA_PREFIX . 'content', $this->algolia_client);
         $this->registered_post_types['page'] = new \WpAlgolia\Register\Page('page', ALGOLIA_PREFIX . 'content', $this->algolia_client);
+        $this->registered_post_types['biography'] = new \WpAlgolia\Register\Biography('biography', ALGOLIA_PREFIX . 'content', $this->algolia_client);
     }
 
 }
@@ -60,6 +61,7 @@ add_action(
         require_once __DIR__ . '/post_types/Post.php';
         require_once __DIR__ . '/post_types/Show.php';
         require_once __DIR__ . '/post_types/Page.php';
+        require_once __DIR__ . '/post_types/Biography.php';
 
         // client
         $algoliaClient = \Algolia\AlgoliaSearch\SearchClient::create(ALGOLIA_APPLICATION_ID, ALGOLIA_ADMIN_API_KEY);

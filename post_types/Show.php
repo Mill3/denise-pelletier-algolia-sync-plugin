@@ -13,9 +13,9 @@ use WpAlgolia\RegisterInterface as WpAlgoliaRegisterInterface;
 
 class Show extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInterface
 {
-    public $searchable_fields = array('post_title');
+    public $searchable_fields = array('post_title', 'content');
 
-    public $acf_fields = array();
+    public $acf_fields = array('credits_short', 'credits_long');
 
     public $taxonomies = array();
 
