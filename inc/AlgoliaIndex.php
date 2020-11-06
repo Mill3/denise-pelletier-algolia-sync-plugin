@@ -108,7 +108,7 @@ class AlgoliaIndex
 
         // handle extra fields formating per post-type
         if(method_exists($this->instance, 'extraFields')) {
-            $data = $this->instance->extraFields($data, $post->ID, $this->log);
+            $data = $this->instance->extraFields($data, $post, $this->log);
         }
 
         // append each custom field values

@@ -46,7 +46,7 @@ class Biography extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterIn
     }
 
     // implement any special data handling for post type here
-    public function extraFields($data, $postID) {
+    public function extraFields($data, $post) {
       return $data;
     }
 }

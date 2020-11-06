@@ -45,7 +45,7 @@ class Notebook extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
     }
 
     // implement any special data handling for post type here
-    public function extraFields($data, $postID) {
+    public function extraFields($data, $post) {
 
         // set permalink as formatted url value
         // $link_to_permalink = get_field('link_to_permalink', $postID);
