@@ -75,23 +75,18 @@ class ShowDate extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
         // get related show
         $show = $this->getShow($postID);
 
-        // stop here of no show found
-        if (!$show) {
-            return $data;
-        }
-
         // generate AttributeForDistinct facetting
         $data['show_date_group'] = $this->createAttributeForDistinct($post, $show, $parsed_date);
 
         // post thumbnail from show
-        $data['post_thumbnail'] = get_the_post_thumbnail_url($show, 'post-thumbnail');
-        $data['show_title'] = $show->post_title;
-        $data['duration'] = get_field('duration', $show->ID);
-        $data['intermission'] = get_field('intermission', $show->ID);
+        $data['post_thumbnail'] = $show ? get_the_post_thumbnail_url($show, 'post-thumbnail') : false;
+        $data['show_title'] = $show ? $show->post_title : false;
+        $data['duration'] = $show ? get_field('duration', $show->ID) : false;
+        $data['intermission'] = $show ? get_field('intermission', $show->ID) : false;
 
         // find room
-        $room = $this->getShowRoom($show->ID);
-        $data['room'] = $room ? $room[0]->post_title : null;
+        $room = $show ? $this->getShowRoom($show->ID) : false;
+        $data['room'] = $room ? $room[0]->post_title : false;
 
         return $data;
     }
