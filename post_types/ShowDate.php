@@ -64,8 +64,11 @@ class ShowDate extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
         // send day, month and year as seperate field value to index
         try {
             $data['day'] = $parsed_date->locale($date_locale)->isoFormat('D');
-            $data['month'] = ucfirst($parsed_date->locale($date_locale)->isoFormat('MMMM YYYY'));
+            $data['weekday'] = $parsed_date->locale($date_locale)->isoFormat('dddd');
+            $data['month'] = ucfirst($parsed_date->locale($date_locale)->isoFormat('MMMM'));
+            $data['month_year'] = ucfirst($parsed_date->locale($date_locale)->isoFormat('MMMM YYYY'));
             $data['year'] = $parsed_date->locale($date_locale)->isoFormat('YYYY');
+            $data['time'] = $parsed_date->locale($date_locale)->isoFormat('H:mm');
             // convert php timestamp from epoch to milliseconds
             $data['timestamp'] = $parsed_date->getTimestamp() * 1000;
         } catch (\Throwable $th) {
