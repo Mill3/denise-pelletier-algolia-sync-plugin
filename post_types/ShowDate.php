@@ -58,8 +58,14 @@ class ShowDate extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
         // get date
         $date = get_field('date', $postID, false);
 
-        // parse dates with Carbon lib
-        $parsed_date = $date ? Carbon::parse($date) : null;
+        // set mid-day at in Carbon, we assume any show that start after 6PM is set in the evening
+        Carbon::setMidDayAt(18);
+
+        // parse date with Carbon lib
+        $parsed_date = $date ? new Carbon($date) : null;
+
+        // set the time_period : matin, soir, etc.
+        $data['time_period'] = $this->setTimePeriod($parsed_date);
 
         // send day, month and year as seperate field value to index
         try {
@@ -77,6 +83,9 @@ class ShowDate extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
 
         // get related show
         $show = $this->getShow($postID);
+
+        // set show type if school_only, etc.
+        $data['show_type'] = $this->setShowType($post->ID);
 
         // generate AttributeForDistinct facetting
         $data['show_date_group'] = $this->createAttributeForDistinct($post, $show, $parsed_date);
@@ -117,7 +126,6 @@ class ShowDate extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
         }
     }
 
-
     private function getShowRoom($postID)
     {
         $room = get_field('room', $postID);
@@ -126,5 +134,21 @@ class ShowDate extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
         } else {
             return null;
         }
+    }
+
+    private function setTimePeriod($parsed_date)
+    {
+        // if datetime is between mid-day and end of the day, return evening
+        if ( $parsed_date->isBetween($parsed_date->copy()->midDay(), $parsed_date->copy()->endOfDay()) === true ) {
+            return "Soir";
+        }
+
+        // defaults to afternoon
+        return "Après-midi";
+    }
+
+    private function setShowType($postID)
+    {
+        return get_field('school_only', $postID) ? "Scolaire" : "Grand public";
     }
 }

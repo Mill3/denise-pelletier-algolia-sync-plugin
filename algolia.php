@@ -5,7 +5,7 @@
  * GitHub Plugin URI:  https://github.com/Mill3/denise-pelletier-algolia-sync-plugin
  * Plugin Name: TDP - Algolia Sync
  * Description: Sync data from Wordpress to Algolia
- * Version: 0.4.9
+ * Version: 0.4.91
  * Author Name: Mill3 Studio (Antoine Girard)
  *
  * @package CSTJ_Algolia_Sync
