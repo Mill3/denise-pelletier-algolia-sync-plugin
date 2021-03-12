@@ -15,7 +15,7 @@ class Notebook extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
 {
     public $searchable_fields = array('post_title', 'content');
 
-    public $acf_fields = array();
+    public $acf_fields = array('author');
 
     public $taxonomies = array();
 
