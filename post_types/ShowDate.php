@@ -58,11 +58,14 @@ class ShowDate extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
         // get date
         $date = get_field('date', $postID, false);
 
+        // stop here if no date found
+        if( !$date ) return $data;
+
         // set mid-day at in Carbon, we assume any show that start after 6PM is set in the evening
         Carbon::setMidDayAt(18);
 
         // parse date with Carbon lib
-        $parsed_date = $date ? new Carbon($date) : null;
+        $parsed_date = $date ? new Carbon($date, 'America/Toronto') : null;
 
         // set the time_period : matin, soir, etc.
         $data['time_period'] = $this->setTimePeriod($parsed_date);
@@ -81,24 +84,26 @@ class ShowDate extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
             //throw $th;
         }
 
-        // get related show
-        $show = $this->getShow($postID);
-
         // set show type if school_only, etc.
         $data['show_type'] = $this->setShowType($post->ID);
 
-        // generate AttributeForDistinct facetting
-        $data['show_date_group'] = $this->createAttributeForDistinct($post, $show, $parsed_date);
+        // get related show
+        $show = $this->getShow($postID);
 
-        // post thumbnail from show
-        $data['post_thumbnail'] = $show ? get_the_post_thumbnail_url($show, 'post-thumbnail') : false;
-        $data['show_title'] = $show ? $show->post_title : false;
-        $data['duration'] = $show ? get_field('duration', $show->ID) : false;
-        $data['intermission'] = $show ? get_field('intermission', $show->ID) : false;
+        if ($show && $show->post_title) {
+            // generate AttributeForDistinct facetting
+            $data['show_date_group'] = $this->createAttributeForDistinct($post, $show, $parsed_date);
 
-        // find room
-        $room = $show ? $this->getShowRoom($show->ID) : false;
-        $data['room'] = $room ? $room[0]->post_title : false;
+            // post thumbnail from show
+            $data['post_thumbnail'] = get_the_post_thumbnail_url($show, 'post-thumbnail');
+            $data['show_title'] = $show->post_title;
+            $data['duration'] = get_field('duration', $show->ID);
+            $data['intermission'] = get_field('intermission', $show->ID);
+
+            // find room
+            $room = $this->getShowRoom($show->ID);
+            $data['room'] = $room ? $room[0]->post_title : false;
+        }
 
         return $data;
     }
@@ -119,7 +124,9 @@ class ShowDate extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
     private function getShow($postID)
     {
         $show = get_field('show', $postID);
-        if (isset($show)) {
+        if ($show) {
+            // ACF do *not* always return object
+            $show = is_object($show) ? $show : $show[0];
             return $show;
         } else {
             return null;
