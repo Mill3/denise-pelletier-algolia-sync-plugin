@@ -87,6 +87,9 @@ class ShowDate extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
         // set show type if school_only, etc.
         $data['show_type'] = $this->setShowType($post->ID);
 
+        // set meet artists value
+        $data['meet_artists'] = $this->setMeetArtists($post->ID);
+
         // get related show
         $show = $this->getShow($postID);
 
@@ -157,5 +160,10 @@ class ShowDate extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
     private function setShowType($postID)
     {
         return get_field('school_only', $postID) ? "Scolaire" : "Grand public";
+    }
+
+    private function setMeetArtists($postID)
+    {
+        return get_field('meet_artists', $postID) ? true : false;
     }
 }
