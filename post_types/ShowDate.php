@@ -9,7 +9,8 @@
 
 namespace WpAlgolia\Register;
 
-use Carbon\Carbon;
+use DateTimeZone;
+use IntlDateFormatter;
 use WpAlgolia\RegisterAbstract as WpAlgoliaRegisterAbstract;
 use WpAlgolia\RegisterInterface as WpAlgoliaRegisterInterface;
 
@@ -31,7 +32,6 @@ class ShowDate extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
             'config'            => array(
                 'searchableAttributes'  => $this->searchableAttributes(),
                 'customRanking'         => array('asc(post_title)'),
-                // 'attributesForFaceting' => array(''),
                 'queryLanguages'        => array('fr'),
             ),
             array(
@@ -47,78 +47,58 @@ class ShowDate extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
         return array_merge($this->searchable_fields, $this->acf_fields, $this->taxonomies);
     }
 
-    // implement any special data handling for post type here
     public function extraFields($data, $post)
     {
-        $date_locale = 'fr';
-
-        // extra postID
         $postID = $post->ID;
 
-        // get date
         $date = get_field('date', $postID, false);
 
-        // stop here if no date found
-        if( !$date ) return $data;
+        if (!$date) return $data;
 
-        // set mid-day at in Carbon, we assume any show that start after 6PM is set in the evening
-        Carbon::setMidDayAt(18);
+        $parsed_date = new \DateTime($date, new DateTimeZone('America/Toronto'));
 
-        // parse date with Carbon lib
-        $parsed_date = $date ? new Carbon($date, 'America/Toronto') : null;
-
-        // set the time_period : matin, soir, etc.
         $data['time_period'] = $this->setTimePeriod($parsed_date);
 
-        // send day, month and year as seperate field value to index
         try {
-            $data['day'] = $parsed_date->locale($date_locale)->isoFormat('D');
-            $data['weekday'] = $parsed_date->locale($date_locale)->isoFormat('dddd');
-            $data['month'] = ucfirst($parsed_date->locale($date_locale)->isoFormat('MMMM'));
-            $data['month_year'] = ucfirst($parsed_date->locale($date_locale)->isoFormat('MMMM YYYY'));
-            $data['year'] = $parsed_date->locale($date_locale)->isoFormat('YYYY');
-            $data['time'] = $parsed_date->locale($date_locale)->isoFormat('H:mm');
-            // convert php timestamp from epoch to milliseconds
-            $data['timestamp'] = $parsed_date->getTimestamp() * 1000;
+            $fmt_weekday = new IntlDateFormatter('fr_CA', IntlDateFormatter::NONE, IntlDateFormatter::NONE, 'America/Toronto', null, 'EEEE');
+            $fmt_month   = new IntlDateFormatter('fr_CA', IntlDateFormatter::NONE, IntlDateFormatter::NONE, 'America/Toronto', null, 'MMMM');
+            $fmt_my      = new IntlDateFormatter('fr_CA', IntlDateFormatter::NONE, IntlDateFormatter::NONE, 'America/Toronto', null, 'MMMM YYYY');
+
+            $data['day']        = $parsed_date->format('j');
+            $data['weekday']    = $fmt_weekday->format($parsed_date);
+            $data['month']      = ucfirst($fmt_month->format($parsed_date));
+            $data['month_year'] = ucfirst($fmt_my->format($parsed_date));
+            $data['year']       = $parsed_date->format('Y');
+            $data['time']       = $parsed_date->format('G:i');
+            $data['timestamp']  = $parsed_date->getTimestamp() * 1000;
         } catch (\Throwable $th) {
-            //throw $th;
+            // continue without date fields
         }
 
-        // set show type if school_only, etc.
-        $data['show_type'] = $this->setShowType($post->ID);
-
-        // set meet artists value
+        $data['show_type']    = $this->setShowType($post->ID);
         $data['meet_artists'] = $this->setMeetArtists($post->ID);
 
-        // get related show
         $show = $this->getShow($postID);
 
         if ($show && $show->post_title) {
-            // generate AttributeForDistinct facetting
             $data['show_date_group'] = $this->createAttributeForDistinct($post, $show, $parsed_date);
+            $data['post_thumbnail']  = get_the_post_thumbnail_url($show, 'post-thumbnail');
+            $data['show_title']      = $show->post_title;
+            $data['duration']        = get_field('duration', $show->ID);
+            $data['intermission']    = get_field('intermission', $show->ID);
 
-            // post thumbnail from show
-            $data['post_thumbnail'] = get_the_post_thumbnail_url($show, 'post-thumbnail');
-            $data['show_title'] = $show->post_title;
-            $data['duration'] = get_field('duration', $show->ID);
-            $data['intermission'] = get_field('intermission', $show->ID);
-
-            // find room
-            $room = $this->getShowRoom($show->ID);
+            $room         = $this->getShowRoom($show->ID);
             $data['room'] = $room ? $room[0]->post_title : false;
         }
 
         return $data;
     }
 
-    private function createAttributeForDistinct($post, $show, $parsed_date)
+    private function createAttributeForDistinct($post, $show, \DateTime $parsed_date): ?string
     {
         try {
-            // create a date string as slug
-            $date_slug = strtolower($parsed_date->locale('en')->isoFormat('D-MMMM-YYYY'));
-
-            // join all that with show slug in front
-            return implode([isset($show->post_name) ? $show->post_name : null, $date_slug], '-');
+            $date_slug = strtolower($parsed_date->format('j-F-Y'));
+            return implode('-', [isset($show->post_name) ? $show->post_name : null, $date_slug]);
         } catch (\Throwable $th) {
             return null;
         }
@@ -128,42 +108,31 @@ class ShowDate extends WpAlgoliaRegisterAbstract implements WpAlgoliaRegisterInt
     {
         $show = get_field('show', $postID);
         if ($show) {
-            // ACF do *not* always return object
             $show = is_object($show) ? $show : $show[0];
             return $show;
-        } else {
-            return null;
         }
+        return null;
     }
 
     private function getShowRoom($postID)
     {
         $room = get_field('room', $postID);
-        if (isset($room)) {
-            return $room;
-        } else {
-            return null;
-        }
+        return isset($room) ? $room : null;
     }
 
-    private function setTimePeriod($parsed_date)
+    private function setTimePeriod(\DateTime $parsed_date): string
     {
-        // if datetime is between mid-day and end of the day, return evening
-        if ( $parsed_date->isBetween($parsed_date->copy()->midDay(), $parsed_date->copy()->endOfDay()) === true ) {
-            return "Soir";
-        }
-
-        // defaults to afternoon
-        return "Après-midi";
+        // shows starting at 18:00 or later are considered evening
+        return (int) $parsed_date->format('H') >= 18 ? 'Soir' : 'Après-midi';
     }
 
-    private function setShowType($postID)
+    private function setShowType($postID): string
     {
-        return get_field('school_only', $postID) ? "Scolaire" : "Grand public";
+        return get_field('school_only', $postID) ? 'Scolaire' : 'Grand public';
     }
 
-    private function setMeetArtists($postID)
+    private function setMeetArtists($postID): bool
     {
-        return get_field('meet_artists', $postID) ? true : false;
+        return (bool) get_field('meet_artists', $postID);
     }
 }
